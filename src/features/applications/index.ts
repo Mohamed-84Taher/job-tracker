@@ -1,8 +1,8 @@
 // Barrel export for the applications feature
 
 // Types
-export type { Application, Status } from './types';
-export { STATUSES } from './types';
+export type { Application, Status } from "./types";
+export { STATUSES } from "./types";
 
 // Schemas
 export {
@@ -11,20 +11,20 @@ export {
   applicationsArraySchema,
   applicationFormSchema,
   isValidApplication,
-} from './schema';
-export type { ApplicationFormData } from './schema';
+} from "./schema";
+export type { ApplicationFormData } from "./schema";
 
 // Reducer
-export {
-  applicationReducer,
-  initialState,
-} from './applicationReducer';
+export { applicationReducer, initialState } from "./applicationReducer";
 export type {
   ApplicationsState,
   ApplicationAction,
-} from './applicationReducer';
+} from "./applicationReducer";
 
 // Context + Hook
-export { ApplicationsProvider, ApplicationsContext } from './ApplicationContext';
-export type { ApplicationsContextValue } from './ApplicationContext';
-export { useApplications } from './useApplications';
+export {
+  ApplicationsProvider,
+  ApplicationsContext,
+} from "./ApplicationProvider";
+export type { ApplicationsContextValue } from "./ApplicationProvider";
+export { useApplications } from "./useApplications";

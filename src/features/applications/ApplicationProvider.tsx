@@ -1,32 +1,10 @@
-import {
-  createContext,
-  useCallback,
-  useEffect,
-  useReducer,
-  type ReactNode,
-} from 'react';
-import { nanoid } from 'nanoid';
-import type { Application } from './types';
-import type { ApplicationFormData } from './schema';
-import {
-  applicationReducer,
-  initialState,
-  type ApplicationsState,
-} from './applicationReducer';
-import * as storage from '../../lib/storage';
-
-// ---------------------------------------------------------------------------
-// Context value shape
-// ---------------------------------------------------------------------------
-
-export interface ApplicationsContextValue extends ApplicationsState {
-  addApplication: (data: ApplicationFormData) => Promise<void>;
-  editApplication: (app: Application) => Promise<void>;
-  deleteApplication: (id: string) => Promise<void>;
-}
-
-export const ApplicationsContext =
-  createContext<ApplicationsContextValue | null>(null);
+import { useCallback, useEffect, useReducer, type ReactNode } from "react";
+import { nanoid } from "nanoid";
+import type { Application } from "./types";
+import type { ApplicationFormData } from "./schema";
+import { applicationReducer, initialState } from "./applicationReducer";
+import { ApplicationsContext } from "./ApplicationContext";
+import * as storage from "../../lib/storage";
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -38,7 +16,7 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
   // Load persisted data on mount
   useEffect(() => {
     storage.getAll().then((apps) => {
-      dispatch({ type: 'LOAD', payload: apps });
+      dispatch({ type: "LOAD", payload: apps });
     });
   }, []);
 
@@ -49,9 +27,7 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
     const all = await storage.getAll();
     const sameStatus = all.filter((a) => a.status === data.status);
     const maxOrder =
-      sameStatus.length > 0
-        ? Math.max(...sameStatus.map((a) => a.order))
-        : -1;
+      sameStatus.length > 0 ? Math.max(...sameStatus.map((a) => a.order)) : -1;
 
     const newApp: Application = {
       ...data,
@@ -60,17 +36,17 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
     };
 
     await storage.save(newApp);
-    dispatch({ type: 'ADD', payload: newApp });
+    dispatch({ type: "ADD", payload: newApp });
   }, []);
 
   const editApplication = useCallback(async (app: Application) => {
     await storage.save(app);
-    dispatch({ type: 'EDIT', payload: app });
+    dispatch({ type: "EDIT", payload: app });
   }, []);
 
   const deleteApplication = useCallback(async (id: string) => {
     await storage.remove(id);
-    dispatch({ type: 'DELETE', payload: id });
+    dispatch({ type: "DELETE", payload: id });
   }, []);
 
   return (

@@ -1,12 +1,12 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import { ApplicationsProvider } from './features/applications/ApplicationContext'
-import App from './App.tsx'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { ApplicationsProvider } from "./features/applications/ApplicationProvider.tsx";
+import App from "./App.tsx";
 
-createRoot(document.getElementById('root')!).render(
+createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <ApplicationsProvider>
       <App />
     </ApplicationsProvider>
   </StrictMode>,
-)
+);

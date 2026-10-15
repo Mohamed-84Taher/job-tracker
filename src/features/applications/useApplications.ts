@@ -1,8 +1,8 @@
-import { useContext } from 'react';
+import { useContext } from "react";
 import {
   ApplicationsContext,
   type ApplicationsContextValue,
-} from './ApplicationContext';
+} from "./ApplicationContext";
 
 /**
  * Hook to access the applications state and actions.
@@ -12,7 +12,7 @@ export function useApplications(): ApplicationsContextValue {
   const ctx = useContext(ApplicationsContext);
   if (!ctx) {
     throw new Error(
-      'useApplications must be used within an <ApplicationsProvider>',
+      "useApplications must be used within an <ApplicationsProvider>",
     );
   }
   return ctx;
