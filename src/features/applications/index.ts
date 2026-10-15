@@ -22,9 +22,9 @@ export type {
 } from "./applicationReducer";
 
 // Context + Hook
+export { ApplicationsProvider } from "./ApplicationProvider";
 export {
-  ApplicationsProvider,
   ApplicationsContext,
-} from "./ApplicationProvider";
-export type { ApplicationsContextValue } from "./ApplicationProvider";
+  type ApplicationsContextValue,
+} from "./ApplicationContext";
 export { useApplications } from "./useApplications";
