@@ -1,205 +1,141 @@
-import { useState } from 'react';
-import { useApplications } from './features/applications/useApplications';
-import { STATUSES } from './features/applications/types';
-import type { Application, Status } from './features/applications/types';
+import { useState } from "react";
+import { Header } from "./components/Header";
+import { Modal } from "./components/Modal";
+import {
+  ApplicationList,
+  ApplicationForm,
+  useApplications,
+  type Application,
+  type ApplicationFormData,
+} from "./features/applications";
 
-/**
- * Minimal demo UI for Phase 1.
- * Proves that add, edit and delete work and survive a page refresh.
- * Will be replaced by proper UI in Phase 2.
- */
 function App() {
-  const { applications, isLoading, addApplication, editApplication, deleteApplication } =
-    useApplications();
+  const {
+    applications,
+    isLoading,
+    addApplication,
+    editApplication,
+    deleteApplication,
+    loadSampleData,
+    clearAllApplications,
+  } = useApplications();
 
-  // ---- form state ---------------------------------------------------------
-  const [company, setCompany] = useState('');
-  const [role, setRole] = useState('');
-  const [status, setStatus] = useState<Status>('applied');
+  // Modal & Edit state
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingApplication, setEditingApplication] =
+    useState<Application | null>(null);
 
-  // ---- edit mode ----------------------------------------------------------
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editCompany, setEditCompany] = useState('');
-  const [editRole, setEditRole] = useState('');
-  const [editStatus, setEditStatus] = useState<Status>('applied');
-
-  // ---- handlers -----------------------------------------------------------
-  const handleAdd = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!company.trim() || !role.trim()) return;
-
-    await addApplication({
-      company: company.trim(),
-      role: role.trim(),
-      status,
-      appliedAt: new Date().toISOString(),
-    });
-
-    setCompany('');
-    setRole('');
-    setStatus('applied');
+  const handleOpenAdd = () => {
+    setEditingApplication(null);
+    setIsModalOpen(true);
   };
 
-  const startEdit = (app: Application) => {
-    setEditingId(app.id);
-    setEditCompany(app.company);
-    setEditRole(app.role);
-    setEditStatus(app.status);
+  const handleOpenEdit = (app: Application) => {
+    setEditingApplication(app);
+    setIsModalOpen(true);
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setEditingApplication(null);
   };
 
-  const handleSaveEdit = async (app: Application) => {
-    await editApplication({
-      ...app,
-      company: editCompany.trim(),
-      role: editRole.trim(),
-      status: editStatus,
-    });
-    setEditingId(null);
+  const handleFormSubmit = async (data: ApplicationFormData) => {
+    if (editingApplication) {
+      await editApplication({
+        ...editingApplication,
+        ...data,
+      });
+    } else {
+      await addApplication(data);
+    }
   };
 
-  // ---- render -------------------------------------------------------------
   if (isLoading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center' }}>
-        <p>Loading applications…</p>
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 text-center">
+        <div className="w-12 h-12 rounded-xl bg-indigo-600 text-white flex items-center justify-center shadow-lg shadow-indigo-100 mb-4 animate-bounce">
+          <svg
+            className="w-6 h-6"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+            />
+          </svg>
+        </div>
+        <h2 className="text-lg font-semibold text-slate-800">
+          Loading your job applications…
+        </h2>
+        <p className="text-sm text-slate-500 mt-1">
+          Accessing local IndexedDB storage
+        </p>
       </div>
     );
   }
 
   return (
-    <div style={{ maxWidth: 700, margin: '0 auto', padding: '2rem', fontFamily: 'system-ui' }}>
-      <h1 style={{ marginBottom: '1.5rem' }}>Job Application Tracker</h1>
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+      {/* Top Header */}
+      <Header
+        totalCount={applications.length}
+        onAddNew={handleOpenAdd}
+      />
 
-      {/* ---- Add form ---- */}
-      <form onSubmit={handleAdd} style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-        <input
-          placeholder="Company"
-          value={company}
-          onChange={(e) => setCompany(e.target.value)}
-          required
-          style={{ padding: '0.5rem', flex: 1, minWidth: 120 }}
+      {/* Main Content Area with Responsive Container */}
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <ApplicationList
+          applications={applications}
+          onAddNew={handleOpenAdd}
+          onEdit={handleOpenEdit}
+          onDelete={deleteApplication}
+          onLoadSampleData={loadSampleData}
+          onClearAll={clearAllApplications}
         />
-        <input
-          placeholder="Role"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          required
-          style={{ padding: '0.5rem', flex: 1, minWidth: 120 }}
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t border-slate-200 bg-white py-6 mt-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
+          <p>
+            Job Tracker &middot; Front-only offline-first application with
+            IndexedDB persistence.
+          </p>
+          <div className="flex items-center gap-4">
+            <span className="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full font-medium">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Local IndexedDB Connected
+            </span>
+          </div>
+        </div>
+      </footer>
+
+      {/* Application Add/Edit Modal */}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCloseModal}
+        title={
+          editingApplication
+            ? `Edit Application: ${editingApplication.company}`
+            : "Add Job Application"
+        }
+        description={
+          editingApplication
+            ? "Update status, salary, interview dates, or notes."
+            : "Fill in the position and company details to track this application."
+        }
+      >
+        <ApplicationForm
+          initialData={editingApplication}
+          onSubmit={handleFormSubmit}
+          onClose={handleCloseModal}
         />
-        <select
-          value={status}
-          onChange={(e) => setStatus(e.target.value as Status)}
-          style={{ padding: '0.5rem' }}
-        >
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s.charAt(0).toUpperCase() + s.slice(1)}
-            </option>
-          ))}
-        </select>
-        <button type="submit" style={{ padding: '0.5rem 1rem' }}>
-          + Add
-        </button>
-      </form>
-
-      {/* ---- Applications list ---- */}
-      {applications.length === 0 ? (
-        <p style={{ color: '#888' }}>No applications yet. Add one above!</p>
-      ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #ddd', textAlign: 'left' }}>
-              <th style={{ padding: '0.5rem' }}>Company</th>
-              <th style={{ padding: '0.5rem' }}>Role</th>
-              <th style={{ padding: '0.5rem' }}>Status</th>
-              <th style={{ padding: '0.5rem' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {applications.map((app) => (
-              <tr key={app.id} style={{ borderBottom: '1px solid #eee' }}>
-                {editingId === app.id ? (
-                  <>
-                    <td style={{ padding: '0.5rem' }}>
-                      <input
-                        value={editCompany}
-                        onChange={(e) => setEditCompany(e.target.value)}
-                        style={{ padding: '0.25rem', width: '100%' }}
-                      />
-                    </td>
-                    <td style={{ padding: '0.5rem' }}>
-                      <input
-                        value={editRole}
-                        onChange={(e) => setEditRole(e.target.value)}
-                        style={{ padding: '0.25rem', width: '100%' }}
-                      />
-                    </td>
-                    <td style={{ padding: '0.5rem' }}>
-                      <select
-                        value={editStatus}
-                        onChange={(e) => setEditStatus(e.target.value as Status)}
-                        style={{ padding: '0.25rem' }}
-                      >
-                        {STATUSES.map((s) => (
-                          <option key={s} value={s}>
-                            {s.charAt(0).toUpperCase() + s.slice(1)}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td style={{ padding: '0.5rem' }}>
-                      <button onClick={() => handleSaveEdit(app)} style={{ marginRight: '0.5rem' }}>
-                        Save
-                      </button>
-                      <button onClick={cancelEdit}>Cancel</button>
-                    </td>
-                  </>
-                ) : (
-                  <>
-                    <td style={{ padding: '0.5rem' }}>{app.company}</td>
-                    <td style={{ padding: '0.5rem' }}>{app.role}</td>
-                    <td style={{ padding: '0.5rem' }}>
-                      <span
-                        style={{
-                          padding: '0.15rem 0.5rem',
-                          borderRadius: '0.75rem',
-                          fontSize: '0.85rem',
-                          background:
-                            app.status === 'applied' ? '#dbeafe'
-                            : app.status === 'interview' ? '#fef3c7'
-                            : app.status === 'offer' ? '#d1fae5'
-                            : '#fee2e2',
-                          color:
-                            app.status === 'applied' ? '#1e40af'
-                            : app.status === 'interview' ? '#92400e'
-                            : app.status === 'offer' ? '#065f46'
-                            : '#991b1b',
-                        }}
-                      >
-                        {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                      </span>
-                    </td>
-                    <td style={{ padding: '0.5rem' }}>
-                      <button onClick={() => startEdit(app)} style={{ marginRight: '0.5rem' }}>
-                        Edit
-                      </button>
-                      <button onClick={() => deleteApplication(app.id)}>Delete</button>
-                    </td>
-                  </>
-                )}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      )}
-
-      <p style={{ marginTop: '2rem', fontSize: '0.85rem', color: '#888' }}>
-        {applications.length} application{applications.length !== 1 ? 's' : ''} · Data is stored in IndexedDB and survives page refresh.
-      </p>
+      </Modal>
     </div>
   );
 }
