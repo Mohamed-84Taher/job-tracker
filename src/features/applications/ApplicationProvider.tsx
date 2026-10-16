@@ -5,6 +5,7 @@ import type { ApplicationFormData } from "./schema";
 import { applicationReducer, initialState } from "./applicationReducer";
 import { ApplicationsContext } from "./ApplicationContext";
 import * as storage from "../../lib/storage";
+import { SAMPLE_APPLICATIONS } from "../../lib/sampleData";
 
 // ---------------------------------------------------------------------------
 // Provider
@@ -49,6 +50,17 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "DELETE", payload: id });
   }, []);
 
+  const loadSampleData = useCallback(async () => {
+    await storage.saveAll(SAMPLE_APPLICATIONS);
+    const all = await storage.getAll();
+    dispatch({ type: "LOAD", payload: all });
+  }, []);
+
+  const clearAllApplications = useCallback(async () => {
+    await storage.clear();
+    dispatch({ type: "LOAD", payload: [] });
+  }, []);
+
   return (
     <ApplicationsContext.Provider
       value={{
@@ -56,6 +68,8 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
         addApplication,
         editApplication,
         deleteApplication,
+        loadSampleData,
+        clearAllApplications,
       }}
     >
       {children}
