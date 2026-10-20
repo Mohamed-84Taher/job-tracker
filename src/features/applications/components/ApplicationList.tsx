@@ -9,6 +9,7 @@ interface ApplicationListProps {
   onAddNew: () => void;
   onEdit: (app: Application) => void;
   onDelete: (id: string) => void;
+  onMoveToStatus?: (id: string, newStatus: Status) => void;
   onLoadSampleData: () => void;
   onClearAll: () => void;
 }
@@ -21,6 +22,7 @@ export const ApplicationList: React.FC<ApplicationListProps> = ({
   onAddNew,
   onEdit,
   onDelete,
+  onMoveToStatus,
   onLoadSampleData,
   onClearAll,
 }) => {
@@ -257,6 +259,7 @@ export const ApplicationList: React.FC<ApplicationListProps> = ({
               application={app}
               onEdit={onEdit}
               onDelete={onDelete}
+              onMoveToStatus={onMoveToStatus}
             />
           ))}
         </div>

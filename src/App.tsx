@@ -2,11 +2,13 @@ import { useState } from "react";
 import { Header } from "./components/Header";
 import { Modal } from "./components/Modal";
 import {
+  KanbanBoard,
   ApplicationList,
   ApplicationForm,
   useApplications,
   type Application,
   type ApplicationFormData,
+  type Status,
 } from "./features/applications";
 
 function App() {
@@ -16,28 +18,39 @@ function App() {
     addApplication,
     editApplication,
     deleteApplication,
+    reorderApplications,
+    moveApplication,
     loadSampleData,
     clearAllApplications,
   } = useApplications();
+
+  // View mode: 'board' (Kanban) or 'list'
+  const [viewMode, setViewMode] = useState<"board" | "list">("board");
 
   // Modal & Edit state
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingApplication, setEditingApplication] =
     useState<Application | null>(null);
+  const [newAppDefaultStatus, setNewAppDefaultStatus] = useState<
+    Status | undefined
+  >(undefined);
 
-  const handleOpenAdd = () => {
+  const handleOpenAdd = (status?: Status) => {
     setEditingApplication(null);
+    setNewAppDefaultStatus(status);
     setIsModalOpen(true);
   };
 
   const handleOpenEdit = (app: Application) => {
     setEditingApplication(app);
+    setNewAppDefaultStatus(undefined);
     setIsModalOpen(true);
   };
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setEditingApplication(null);
+    setNewAppDefaultStatus(undefined);
   };
 
   const handleFormSubmit = async (data: ApplicationFormData) => {
@@ -82,21 +95,103 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
       {/* Top Header */}
-      <Header
-        totalCount={applications.length}
-        onAddNew={handleOpenAdd}
-      />
+      <Header totalCount={applications.length} onAddNew={() => handleOpenAdd()} />
 
       {/* Main Content Area with Responsive Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <ApplicationList
-          applications={applications}
-          onAddNew={handleOpenAdd}
-          onEdit={handleOpenEdit}
-          onDelete={deleteApplication}
-          onLoadSampleData={loadSampleData}
-          onClearAll={clearAllApplications}
-        />
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+        {/* View Mode Bar: Board vs List Toggle */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
+              {viewMode === "board" ? "Kanban Pipeline" : "Applications Directory"}
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+              {viewMode === "board"
+                ? "Organize your job search visually. Drag cards across stages."
+                : "Search, filter, and sort all your tracked positions."}
+            </p>
+          </div>
+
+          <div className="flex items-center self-start sm:self-auto bg-slate-200/80 p-1 rounded-xl shadow-2xs">
+            <button
+              type="button"
+              onClick={() => setViewMode("board")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === "board"
+                  ? "bg-white text-indigo-700 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              title="Kanban Board View"
+              aria-pressed={viewMode === "board"}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"
+                />
+              </svg>
+              <span>Board</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setViewMode("list")}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                viewMode === "list"
+                  ? "bg-white text-indigo-700 shadow-xs"
+                  : "text-slate-600 hover:text-slate-900"
+              }`}
+              title="List View"
+              aria-pressed={viewMode === "list"}
+            >
+              <svg
+                className="w-4 h-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M4 6h16M4 10h16M4 14h16M4 18h16"
+                />
+              </svg>
+              <span>List</span>
+            </button>
+          </div>
+        </div>
+
+        {/* View Content: KanbanBoard or ApplicationList */}
+        {viewMode === "board" ? (
+          <KanbanBoard
+            applications={applications}
+            onAddNew={handleOpenAdd}
+            onEdit={handleOpenEdit}
+            onDelete={deleteApplication}
+            onMoveToStatus={moveApplication}
+            onReorder={reorderApplications}
+            onLoadSampleData={loadSampleData}
+            onClearAll={clearAllApplications}
+          />
+        ) : (
+          <ApplicationList
+            applications={applications}
+            onAddNew={() => handleOpenAdd()}
+            onEdit={handleOpenEdit}
+            onDelete={deleteApplication}
+            onMoveToStatus={moveApplication}
+            onLoadSampleData={loadSampleData}
+            onClearAll={clearAllApplications}
+          />
+        )}
       </main>
 
       {/* Footer */}
@@ -132,6 +227,7 @@ function App() {
       >
         <ApplicationForm
           initialData={editingApplication}
+          defaultStatus={newAppDefaultStatus}
           onSubmit={handleFormSubmit}
           onClose={handleCloseModal}
         />
