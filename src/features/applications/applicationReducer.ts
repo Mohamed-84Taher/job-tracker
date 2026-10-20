@@ -22,7 +22,8 @@ type Action =
   | { type: 'LOAD'; payload: Application[] }
   | { type: 'ADD'; payload: Application }
   | { type: 'EDIT'; payload: Application }
-  | { type: 'DELETE'; payload: string }; // payload = id
+  | { type: 'DELETE'; payload: string } // payload = id
+  | { type: 'REORDER'; payload: Application[] };
 
 export type ApplicationAction = Action;
 
@@ -62,6 +63,12 @@ export function applicationReducer(
         applications: state.applications.filter(
           (app) => app.id !== action.payload,
         ),
+      };
+
+    case 'REORDER':
+      return {
+        ...state,
+        applications: action.payload,
       };
 
     default:

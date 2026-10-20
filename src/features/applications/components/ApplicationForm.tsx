@@ -6,12 +6,14 @@ import { Button } from "../../../components/Button";
 
 interface ApplicationFormProps {
   initialData?: Application | null;
+  defaultStatus?: Status;
   onSubmit: (data: ApplicationFormData) => Promise<void>;
   onClose: () => void;
 }
 
 export const ApplicationForm: React.FC<ApplicationFormProps> = ({
   initialData,
+  defaultStatus,
   onSubmit,
   onClose,
 }) => {
@@ -21,7 +23,7 @@ export const ApplicationForm: React.FC<ApplicationFormProps> = ({
   const [company, setCompany] = useState(initialData?.company ?? "");
   const [role, setRole] = useState(initialData?.role ?? "");
   const [status, setStatus] = useState<Status>(
-    initialData?.status ?? "applied",
+    initialData?.status ?? defaultStatus ?? "applied",
   );
   const [location, setLocation] = useState(initialData?.location ?? "");
   const [salary, setSalary] = useState(initialData?.salary ?? "");

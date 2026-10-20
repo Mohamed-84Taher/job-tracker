@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useReducer, type ReactNode } from "react";
 import { nanoid } from "nanoid";
-import type { Application } from "./types";
+import type { Application, Status } from "./types";
 import type { ApplicationFormData } from "./schema";
 import { applicationReducer, initialState } from "./applicationReducer";
 import { ApplicationsContext } from "./ApplicationContext";
@@ -50,6 +50,43 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
     dispatch({ type: "DELETE", payload: id });
   }, []);
 
+  const reorderApplications = useCallback(
+    async (updated: Application[]) => {
+      await storage.saveAll(updated);
+      dispatch({ type: "REORDER", payload: updated });
+    },
+    [],
+  );
+
+  const moveApplication = useCallback(
+    async (id: string, newStatus: Status, newOrder?: number) => {
+      const all = await storage.getAll();
+      const targetApp = all.find((a) => a.id === id);
+      if (!targetApp) return;
+
+      const sameStatus = all.filter(
+        (a) => a.status === newStatus && a.id !== id,
+      );
+      const computedOrder =
+        newOrder !== undefined
+          ? newOrder
+          : sameStatus.length > 0
+            ? Math.max(...sameStatus.map((a) => a.order)) + 1
+            : 0;
+
+      const updatedApp: Application = {
+        ...targetApp,
+        status: newStatus,
+        order: computedOrder,
+      };
+
+      await storage.save(updatedApp);
+      const updatedAll = all.map((a) => (a.id === id ? updatedApp : a));
+      dispatch({ type: "REORDER", payload: updatedAll });
+    },
+    [],
+  );
+
   const loadSampleData = useCallback(async () => {
     await storage.saveAll(SAMPLE_APPLICATIONS);
     const all = await storage.getAll();
@@ -68,6 +105,8 @@ export function ApplicationsProvider({ children }: { children: ReactNode }) {
         addApplication,
         editApplication,
         deleteApplication,
+        reorderApplications,
+        moveApplication,
         loadSampleData,
         clearAllApplications,
       }}
