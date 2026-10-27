@@ -15,6 +15,9 @@ import { Button } from "../../../components/Button";
 
 interface KanbanBoardProps {
   applications: Application[];
+  totalCount?: number;
+  isFiltered?: boolean;
+  onResetFilters?: () => void;
   onAddNew: (status?: Status) => void;
   onEdit: (app: Application) => void;
   onDelete: (id: string) => void;
@@ -35,6 +38,9 @@ type ColumnItems = Record<Status, string[]>;
 
 export const KanbanBoard: React.FC<KanbanBoardProps> = ({
   applications,
+  totalCount,
+  isFiltered = false,
+  onResetFilters,
   onAddNew,
   onEdit,
   onDelete,
@@ -147,8 +153,47 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
     }
   };
 
-  // Overall empty state if no applications exist at all
+  // Empty state: either no applications match filters, or database is completely empty
   if (applications.length === 0) {
+    if (isFiltered) {
+      return (
+        <div className="bg-white rounded-2xl border border-slate-200/90 p-8 sm:p-12 text-center shadow-xs">
+          <div className="w-14 h-14 bg-indigo-50 border border-indigo-100 rounded-2xl mx-auto flex items-center justify-center text-indigo-600 mb-4 shadow-2xs">
+            <svg
+              className="w-7 h-7"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-900 mb-1">
+            No applications match your filters
+          </h3>
+          <p className="text-sm text-slate-500 max-w-md mx-auto mb-6">
+            We couldn&apos;t find any job applications matching your active search,
+            status, or date criteria.
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {onResetFilters && (
+              <Button variant="primary" onClick={onResetFilters}>
+                Reset All Filters
+              </Button>
+            )}
+            <Button variant="outline" onClick={() => onAddNew()}>
+              Add New Application
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="bg-white rounded-2xl border border-slate-200/90 p-8 sm:p-12 text-center shadow-xs">
         <div className="w-14 h-14 bg-indigo-50 border border-indigo-100 rounded-2xl mx-auto flex items-center justify-center text-indigo-600 mb-4 shadow-2xs">
@@ -207,7 +252,10 @@ export const KanbanBoard: React.FC<KanbanBoardProps> = ({
         <div className="flex items-center gap-2">
           <span className="font-semibold text-slate-700">
             {applications.length}{" "}
-            {applications.length === 1 ? "Application" : "Applications"} Total
+            {applications.length === 1 ? "Application" : "Applications"}
+            {isFiltered && totalCount !== undefined
+              ? ` (filtered from ${totalCount})`
+              : " Total"}
           </span>
           <span className="text-slate-300">&bull;</span>
           <span className="hidden sm:inline text-slate-500">
