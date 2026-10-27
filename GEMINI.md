@@ -64,8 +64,17 @@ src/
 │   │       └── StatusBadge.tsx          # Colored status pill
 │   ├── settings/                 # (Phase 6 — dark mode toggle, preferences)
 │   │   └── .gitkeep.ts
-│   └── stats/                    # (Phase 5 — recharts dashboard)
-│       └── .gitkeep.ts
+│   └── stats/                    # ★ Stats dashboard feature (Phase 5)
+│       ├── index.ts              # Barrel export
+│       ├── types.ts              # StatsSummary, StatusMetric, TimelineDataPoint, FunnelStage
+│       ├── utils/
+│       │   └── calculateStats.ts # KPI summaries, conversion rates, timeline calculations
+│       └── components/
+│           ├── StatsDashboard.tsx           # Full stats view (/stats route)
+│           ├── StatsSummaryCards.tsx        # 4 summary KPI cards
+│           ├── ApplicationsTimelineChart.tsx# Recharts line chart (cumulative/daily)
+│           ├── StatusDistributionChart.tsx  # Recharts donut & bar chart
+│           └── ConversionRatesChart.tsx     # Recruitment funnel & rate breakdown
 ├── lib/
 │   ├── storage.ts                # IndexedDB adapter: getAll, save, saveAll, remove, clear
 │   └── sampleData.ts             # SAMPLE_APPLICATIONS constant for demo/reset
@@ -166,8 +175,8 @@ File: `.github/workflows/deploy.yml`
 | 2     | Basic UI                      | ✅ Complete |
 | 3     | Kanban board                  | ✅ Complete |
 | 4     | Search, filters, sorting      | ✅ Complete |
-| 5     | Stats dashboard (recharts)    | ⬜ Next     |
-| 6     | Reminders & extras            | ⬜ Planned  |
+| 5     | Stats dashboard (recharts)    | ✅ Complete |
+| 6     | Reminders & extras            | ⬜ Next     |
 | 7     | PWA & offline                 | ⬜ Planned  |
 | 8     | Testing (Vitest)              | ⬜ Planned  |
 | 9     | CI/CD & quality               | ⬜ Planned  |
