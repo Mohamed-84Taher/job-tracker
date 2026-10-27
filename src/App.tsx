@@ -5,7 +5,9 @@ import {
   KanbanBoard,
   ApplicationList,
   ApplicationForm,
+  ApplicationFilters,
   useApplications,
+  useApplicationFilters,
   type Application,
   type ApplicationFormData,
   type Status,
@@ -24,8 +26,9 @@ function App() {
     clearAllApplications,
   } = useApplications();
 
-  // View mode: 'board' (Kanban) or 'list'
-  const [viewMode, setViewMode] = useState<"board" | "list">("board");
+  // Search, filter, sorting, and URL sync hook
+  const filters = useApplicationFilters(applications);
+  const { viewMode, setViewMode } = filters;
 
   // Modal & Edit state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -169,10 +172,35 @@ function App() {
           </div>
         </div>
 
+        {/* Search, Filter & Sort Toolbar */}
+        <ApplicationFilters
+          searchInput={filters.searchInput}
+          onSearchChange={filters.setSearchInput}
+          statusFilter={filters.statusFilter}
+          onStatusChange={filters.setStatusFilter}
+          statusCounts={filters.statusCounts}
+          startDate={filters.startDate}
+          onStartDateChange={filters.setStartDate}
+          endDate={filters.endDate}
+          onEndDateChange={filters.setEndDate}
+          hasFollowUp={filters.hasFollowUp}
+          onHasFollowUpChange={filters.setHasFollowUp}
+          sortBy={filters.sortBy}
+          onSortChange={filters.setSortBy}
+          activeFilterCount={filters.activeFilterCount}
+          isFiltered={filters.isFiltered}
+          totalCount={filters.totalCount}
+          filteredCount={filters.filteredCount}
+          onResetFilters={filters.resetFilters}
+        />
+
         {/* View Content: KanbanBoard or ApplicationList */}
         {viewMode === "board" ? (
           <KanbanBoard
-            applications={applications}
+            applications={filters.filteredApplications}
+            totalCount={filters.totalCount}
+            isFiltered={filters.isFiltered}
+            onResetFilters={filters.resetFilters}
             onAddNew={handleOpenAdd}
             onEdit={handleOpenEdit}
             onDelete={deleteApplication}
@@ -183,7 +211,10 @@ function App() {
           />
         ) : (
           <ApplicationList
-            applications={applications}
+            applications={filters.filteredApplications}
+            totalCount={filters.totalCount}
+            isFiltered={filters.isFiltered}
+            onResetFilters={filters.resetFilters}
             onAddNew={() => handleOpenAdd()}
             onEdit={handleOpenEdit}
             onDelete={deleteApplication}

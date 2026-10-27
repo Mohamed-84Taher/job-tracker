@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from "react";
+import React, { useState } from "react";
 import type { Application, Status } from "../types";
-import { STATUSES } from "../types";
 import { ApplicationCard } from "./ApplicationCard";
 import { Button } from "../../../components/Button";
 
 interface ApplicationListProps {
   applications: Application[];
+  totalCount?: number;
+  isFiltered?: boolean;
+  onResetFilters?: () => void;
   onAddNew: () => void;
   onEdit: (app: Application) => void;
   onDelete: (id: string) => void;
@@ -14,11 +16,11 @@ interface ApplicationListProps {
   onClearAll: () => void;
 }
 
-type FilterStatus = "all" | Status;
-type SortOption = "date-desc" | "date-asc" | "company-asc";
-
 export const ApplicationList: React.FC<ApplicationListProps> = ({
   applications,
+  totalCount,
+  isFiltered = false,
+  onResetFilters,
   onAddNew,
   onEdit,
   onDelete,
@@ -26,53 +28,10 @@ export const ApplicationList: React.FC<ApplicationListProps> = ({
   onLoadSampleData,
   onClearAll,
 }) => {
-  const [filter, setFilter] = useState<FilterStatus>("all");
-  const [sortOption, setSortOption] = useState<SortOption>("date-desc");
   const [showClearConfirm, setShowClearConfirm] = useState(false);
 
-  // Status counts
-  const counts = useMemo(() => {
-    const summary: Record<FilterStatus, number> = {
-      all: applications.length,
-      applied: 0,
-      interview: 0,
-      offer: 0,
-      rejected: 0,
-    };
-    for (const app of applications) {
-      if (summary[app.status] !== undefined) {
-        summary[app.status]++;
-      }
-    }
-    return summary;
-  }, [applications]);
-
-  // Filtered & sorted applications
-  const displayedApplications = useMemo(() => {
-    let result = [...applications];
-
-    if (filter !== "all") {
-      result = result.filter((app) => app.status === filter);
-    }
-
-    result.sort((a, b) => {
-      if (sortOption === "company-asc") {
-        return a.company.localeCompare(b.company);
-      }
-      const dateA = new Date(a.appliedAt).getTime();
-      const dateB = new Date(b.appliedAt).getTime();
-      if (sortOption === "date-asc") {
-        return dateA - dateB;
-      }
-      // default: date-desc
-      return dateB - dateA;
-    });
-
-    return result;
-  }, [applications, filter, sortOption]);
-
-  // 1. Empty state when there are NO applications at all
-  if (applications.length === 0) {
+  // 1. Empty state when there are NO applications at all in the database
+  if (applications.length === 0 && !isFiltered) {
     return (
       <div className="bg-white rounded-2xl border border-dashed border-slate-300 p-12 text-center max-w-xl mx-auto my-8 shadow-xs">
         <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
@@ -123,137 +82,100 @@ export const ApplicationList: React.FC<ApplicationListProps> = ({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Controls & Filter toolbar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200">
-        {/* Status filter tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 scrollbar-none">
-          <button
-            onClick={() => setFilter("all")}
-            className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 shrink-0 ${
-              filter === "all"
-                ? "bg-slate-900 text-white shadow-xs"
-                : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-            }`}
-          >
-            All
-            <span
-              className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
-                filter === "all"
-                  ? "bg-slate-800 text-slate-200"
-                  : "bg-slate-200 text-slate-700"
-              }`}
-            >
-              {counts.all}
+    <div className="space-y-4">
+      {/* Directory Action Header */}
+      <div className="flex items-center justify-between gap-4 pb-2 border-b border-slate-200">
+        <div className="text-xs font-semibold text-slate-600">
+          <span>
+            {applications.length}{" "}
+            {applications.length === 1 ? "Position" : "Positions"} Listed
+          </span>
+          {isFiltered && totalCount !== undefined && (
+            <span className="text-slate-400 font-normal ml-1">
+              (filtered from {totalCount})
             </span>
-          </button>
-
-          {STATUSES.map((status) => (
-            <button
-              key={status}
-              onClick={() => setFilter(status)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors cursor-pointer flex items-center gap-1.5 capitalize shrink-0 ${
-                filter === status
-                  ? "bg-indigo-600 text-white shadow-xs"
-                  : "bg-slate-100 text-slate-600 hover:bg-slate-200"
-              }`}
-            >
-              {status}
-              <span
-                className={`px-1.5 py-0.2 rounded-full text-[10px] font-semibold ${
-                  filter === status
-                    ? "bg-indigo-700 text-indigo-100"
-                    : "bg-slate-200 text-slate-700"
-                }`}
-              >
-                {counts[status]}
-              </span>
-            </button>
-          ))}
+          )}
         </div>
 
-        {/* Sort & Secondary Actions */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <label
-              htmlFor="sort-select"
-              className="text-xs font-medium text-slate-500 shrink-0"
-            >
-              Sort by:
-            </label>
-            <select
-              id="sort-select"
-              value={sortOption}
-              onChange={(e) => setSortOption(e.target.value as SortOption)}
-              className="px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg text-slate-700 focus:outline-hidden focus:ring-2 focus:ring-indigo-500 cursor-pointer shadow-2xs"
-            >
-              <option value="date-desc">Newest Applied</option>
-              <option value="date-asc">Oldest Applied</option>
-              <option value="company-asc">Company (A-Z)</option>
-            </select>
-          </div>
-
-          <div className="h-4 w-px bg-slate-300 hidden sm:block" />
-
-          {/* Load Sample / Clear buttons */}
-          <div className="flex items-center gap-1.5">
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={onLoadSampleData}
-              title="Add sample applications"
-            >
-              + Samples
-            </Button>
-            {showClearConfirm ? (
-              <div className="flex items-center gap-1 animate-in fade-in">
-                <Button
-                  size="sm"
-                  variant="danger"
-                  onClick={() => {
-                    onClearAll();
-                    setShowClearConfirm(false);
-                  }}
-                >
-                  Clear DB
-                </Button>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setShowClearConfirm(false)}
-                >
-                  ✕
-                </Button>
-              </div>
-            ) : (
+        {/* Load Sample / Clear buttons */}
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={onLoadSampleData}
+            title="Add sample applications"
+          >
+            + Samples
+          </Button>
+          {showClearConfirm ? (
+            <div className="flex items-center gap-1 animate-in fade-in">
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => {
+                  onClearAll();
+                  setShowClearConfirm(false);
+                }}
+              >
+                Clear DB
+              </Button>
               <Button
                 size="sm"
                 variant="ghost"
-                onClick={() => setShowClearConfirm(true)}
-                title="Clear all stored applications"
-                className="text-slate-400 hover:text-rose-600"
+                onClick={() => setShowClearConfirm(false)}
               >
-                Clear
+                ✕
               </Button>
-            )}
-          </div>
+            </div>
+          ) : (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowClearConfirm(true)}
+              title="Clear all stored applications"
+              className="text-slate-400 hover:text-rose-600"
+            >
+              Clear
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* 2. Empty state for when filter returns 0 results */}
-      {displayedApplications.length === 0 ? (
-        <div className="bg-white rounded-xl border border-slate-200 p-8 text-center my-6">
-          <p className="text-slate-600 text-sm mb-3">
-            No applications found matching the <strong>{filter}</strong> status.
+      {/* 2. Empty state for when active filter returns 0 results */}
+      {applications.length === 0 ? (
+        <div className="bg-white rounded-2xl border border-slate-200 p-8 sm:p-12 text-center my-6">
+          <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3 text-slate-500">
+            <svg
+              className="w-6 h-6"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <h4 className="text-base font-semibold text-slate-800 mb-1">
+            No matching applications found
+          </h4>
+          <p className="text-slate-500 text-sm max-w-sm mx-auto mb-4">
+            Try adjusting your search keywords, clearing status, or resetting your
+            date range filters.
           </p>
-          <Button size="sm" variant="outline" onClick={() => setFilter("all")}>
-            Show all applications
-          </Button>
+          {onResetFilters && (
+            <Button size="sm" variant="outline" onClick={onResetFilters}>
+              Reset all filters
+            </Button>
+          )}
         </div>
       ) : (
         /* Applications Card Grid */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {displayedApplications.map((app) => (
+          {applications.map((app) => (
             <ApplicationCard
               key={app.id}
               application={app}

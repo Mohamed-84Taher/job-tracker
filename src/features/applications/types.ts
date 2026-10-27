@@ -38,6 +38,35 @@ export interface Application {
   appliedAt: string;
   /** ISO date string for follow-up reminder */
   followUpAt?: string;
-  /** Position inside the status column (for ordering) */
+/**
+ * Position inside the status column (for ordering)
+ */
   order: number;
 }
+
+/**
+ * Status filter option, including 'all' to show all applications.
+ */
+export type FilterStatus = 'all' | Status;
+
+/**
+ * Supported sorting options for applications.
+ */
+export type SortOption =
+  | 'date-desc'
+  | 'date-asc'
+  | 'company-asc'
+  | 'company-desc';
+
+/**
+ * Filter and sort parameters.
+ */
+export interface ApplicationFilterState {
+  search: string;
+  status: FilterStatus;
+  startDate: string;
+  endDate: string;
+  hasFollowUp: boolean;
+  sortBy: SortOption;
+}
+
